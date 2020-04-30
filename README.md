@@ -113,10 +113,10 @@ To use the model, simply load it using it's checkpoint file, and extract the bou
 
 ### 5. TODO
 
-[  ] Keras Metric that computes the mAP after every epoch. <br>
-[  ] More extensive data augmentation options such as flips and crops. <br>
-[  ] Multi-Scale Learning. <br>
-[  ] Multi-Scale output as in YOLOv3
+[ ] Keras Metric that computes the mAP after every epoch. <br>
+[ ] More extensive data augmentation options such as flips and crops. <br>
+[ ] Multi-Scale Learning. <br>
+[ ] Multi-Scale output as in YOLOv3
 
 ### 6. Requirements
 
