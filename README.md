@@ -18,7 +18,7 @@ Original Paper Links: [YOLOv1](https://arxiv.org/abs/1506.02640) , [YOLOv2](http
 
 The diagram below is a summary of what my implementation does.
 
-![image.png](attachment:image.png)
+![Summary Diagram](/images/system_diagram.jpg)
 
 ### 2. Code Structure Overview
 
@@ -90,7 +90,7 @@ B ) Create a txt file for each split of your dataset where each line in the txt 
 A ) In GlobalValues.py, specify the names of your classes. Navigate into the data directory and run voc_to_yolo.py. This simply creates a txt file for each xml file where the annotations are now in the YOLO format [class_id x_center y_center width height] with the coordinate values normalized to lie between 0 and 1.
 
 (note: In YOLO systems, image annotations are encoded into label tensors as shown in the following image. This is what the system is trained to output. The number of boxes/anchor-boxes and the size of the grid can be adjusted in GlobalValues.py)
-![Untitled.png](attachment:Untitled.png)
+![YOLOv2 Output Tensor](images/YOLO_output_tensor.png)
 
 B ) For each image, this step transforms it's annotations into a label Tensor. It then encodes all images and their label tensors into a 10-sharded TFRecord file. Repeat this step for each dataset split: In GlobalValues.py specify the name of the previosuly created txt file you want to use. Then, from the root directory, run YOLO/src/scripts/create_TFRecords.py
 
