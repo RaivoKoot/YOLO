@@ -20,7 +20,7 @@ The diagram below is a summary of what my implementation does.
 
 ![Summary Diagram](/images/system_diagram.jpg)
 
-### 2. Code Structure Overview
+### 3. Code Structure Overview
 
 The folder structure looks as follows (Some folders left out):
 <pre>
@@ -74,18 +74,18 @@ root
 └───model_checkpoints (Tensorboard logs and model save files)
 </pre>
 
-### 3. Project Explanation
+### 4. Project Explanation
 
 To best summarize what I have implemented, the below guide quickly runs you through a typical usage of the system.
 
 The file GlobalValues.py acts as the config file for the system. In it you have settings for customizing the loss, the preprocessing, and the anchor boxes, and you also define information of your custom dataset such as class names.
 
-##### 3.1 Data
+##### 4.1 Data
 A ) Collect a dataset where the object annotations are in PASCAL VOC format and the images are jpg files. Place all jpg and xml files into the YOLO/data/files directory.
 
 B ) Create a txt file for each split of your dataset where each line in the txt file is the name (without .filetype suffix) of an image/xml. This way the system knows which files belong into train, validation and test splits. Place these txt files into the YOLO/data directory
 
-##### 3.2 Data Preparation
+##### 4.2 Data Preparation
 
 A ) In GlobalValues.py, specify the names of your classes. Navigate into the data directory and run voc_to_yolo.py. This simply creates a txt file for each xml file where the annotations are now in the YOLO format [class_id x_center y_center width height] with the coordinate values normalized to lie between 0 and 1.
 
@@ -94,7 +94,7 @@ A ) In GlobalValues.py, specify the names of your classes. Navigate into the dat
 
 B ) For each image, this step transforms it's annotations into a label Tensor. It then encodes all images and their label tensors into a 10-sharded TFRecord file. Repeat this step for each dataset split: In GlobalValues.py specify the name of the previosuly created txt file you want to use. Then, from the root directory, run YOLO/src/scripts/create_TFRecords.py
 
-##### 3.3 Data Input Pipeline and Training
+##### 4.3 Data Input Pipeline and Training
 
 To load the data for training, the helper function get_dataset() in YOLO/src/helper_functions/load_TFRecords.py can be used. The function also resizes, scales, partially augments and batches the images. <br>
 
@@ -103,7 +103,7 @@ The tf.data.Dataset returned does not eagerly load and process all the data, but
 A ) Finally, open the notebook train.ipynb. It loads the data as described above. You can define and customize your model architecture as long as the architecture's output tensor matches the desired shape defined earlier. Currently, I use the Keras functional API for this, but any Tensorflow code can be used. The model aims to minimize the YOLO loss functions implemented in YOLO/src/classes/Losses.py <br>
 To start training, simply run the cells and observe the metrics printed by keras' model.fit()
 
-##### 3.4 Saving, Loading, and Using the Model
+##### 4.4 Saving, Loading, and Using the Model
 
 In order to make sense of the output tensors, YOLO/src/helper_functions/model_output_utils.py provides functions to extract bounding boxes from the output tensors in VOC format and apply Non-Max Suppression.
 
@@ -111,17 +111,17 @@ The model's weights are saved in model_checkpoints/ after every training epoch u
 
 To use the model, simply load it using it's checkpoint file, and extract the bounding boxes from the network's output using the given function.
 
-### 4. TODO
+### 5. TODO
 
 [_] Keras Metric that computes the mAP after every epoch. <br>
 [_] More extensive data augmentation options such as flips and crops. <br>
 [_] Multi-Scale Learning. <br>
 [_] Multi-Scale output as in YOLOv3
 
-### 5. Requirements
+### 6. Requirements
 
 Python version 3 and tensorflow >= 2.2.0 (currently nightly)
 
-### 6. Closing Words
+### 7. Closing Words
 
 Due to currently not having access to a GPU, I am unable to train these models to the end. Because of that I can unfortunately not show performance results and demos at this time.
