@@ -111,17 +111,31 @@ The model's weights are saved in model_checkpoints/ after every training epoch u
 
 To use the model, simply load it using it's checkpoint file, and extract the bounding boxes from the network's output using the given function.
 
-### 5. TODO
+### 5. State: May 1st 2020
+
+Things not included yet:
+- A Network with Weights Trained until Convergence
+- Extensive Data Augmentation Features
+- Metric to Compute mAP during and after Training
+- An exact Network Rebuild of the YOLOv2 or YOLOv3 Network ( Because this project/framework leaves the exact network definition open to the user)
+
+Things included:
+- Scripts to Transform VOC-annotated Data to YOLO Format
+- Functions to Load, Preprocess, and Partially Augment the Data in a Scalable Way
+- Custom-Built YOLO Loss Functions to Minimize
+- Functions to Extract Final Bounding Boxes from YOLO Output Tensors
+
+### 6. TODO
 
 [ ] Keras Metric that computes the mAP after every epoch. <br>
 [ ] More extensive data augmentation options such as flips and crops. <br>
 [ ] Multi-Scale Learning. <br>
 [ ] Multi-Scale output as in YOLOv3
 
-### 6. Requirements
+### 7. Requirements
 
 Python version 3 and tensorflow >= 2.2.0 (currently nightly)
 
-### 7. Closing Words
+### 8. Closing Words
 
 Due to currently not having access to a GPU, I am unable to train these models to the end. Because of that I can unfortunately not show performance results and demos at this time.
