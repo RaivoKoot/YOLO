@@ -78,7 +78,7 @@ root
 
 To best summarize what I have implemented, the below guide quickly runs you through a typical usage of the system.
 
-The file GlobalValues.py acts as the config file for the system. In it you have settings for customizing the loss, the preprocessing, and the anchor boxes, and you also define information of your custom dataset such as class names.
+The file GlobalValues.py acts as the config file for the system. In it you have settings for customizing the loss, the preprocessing, and the anchor boxes, and you also define information about your custom dataset such as class names.
 
 ##### 4.1 Data
 A ) Collect a dataset where the object annotations are in PASCAL VOC format and the images are jpg files. Place all jpg and xml files into the YOLO/data/files directory.
