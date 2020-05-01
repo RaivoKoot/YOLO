@@ -1,4 +1,4 @@
-#  YOLO Tensorflow
+#  YOLO Tensorflow Framework
 
 ### 1. Introduction
 
