@@ -2,7 +2,7 @@
 
 ### 1. Introduction
 
-This is my implementation of YOLO in Tensorflow. I built this mainly for learning purposes and experimentation.
+This is my implementation of YOLO in Tensorflow. It contains all the features needed to build and train a YOLO-based object detector. I built this mainly for learning purposes and experimentation.
 Nevertheless, the project consists of a full end to end pipeline from raw VOC annotated data, all the way to training and evaluating the detection model. The two key features are:
 
 - Scalable tf.data pipeline
