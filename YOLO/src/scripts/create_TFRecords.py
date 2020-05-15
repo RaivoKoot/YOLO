@@ -60,8 +60,36 @@ OUTPUT_PATH = ROOTDATA_PATH / 'TFRecords'
 
 GRID_LENGTH = GlobalValues.S
 BOXES = GlobalValues.B
-OUTPUTS_PER_BOX = GlobalValues.OUTPUTS_PER_BOX
 CLASSES = GlobalValues.CLASSES
+
+def create_annotation_tensor(filename):
+    '''
+    Given a filename of a yolo annotation txt file,
+    loads the annotation file and returns a B*5 Tensor
+    filled with the annotations in VOC format.
+    '''
+    filename = filename +'.txt'
+    file = ANNOTATION_PATH / filename
+
+    objects = open(file, 'r').readlines()
+
+    object_annotations = []
+
+    for object in objects:
+        values = object.split()
+        class_id = int(values[0])
+        x_center = float(values[1])
+        y_center = float(values[2])
+        width = float(values[3])
+        height = float(values[4])
+
+        annotation = [x_center, y_center, width, height, class_id]
+
+        object_annotations.append(annotation)
+
+    annotations = tf.constant(object_annotations)
+
+    return annotations
 
 def create_labeltensor(filename):
     '''
@@ -112,9 +140,10 @@ def load_instance(filename):
     '''
     file = DATA_PATH / (filename+'.jpg')
     image = tf.constant(np.asarray(tf.keras.preprocessing.image.load_img(file)))
-    label_tensor = create_labeltensor(filename)
+    #label_tensor = create_labeltensor(filename)
+    annotations = create_annotation_tensor(filename)
 
-    return image, label_tensor
+    return image, annotations #label_tensor
 
 def create_example(image, label):
     '''

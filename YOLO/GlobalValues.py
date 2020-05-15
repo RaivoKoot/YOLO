@@ -34,7 +34,7 @@ def initialize():
 
     S = 7
     B = 8
-    CLASS_NAMES = ["car", "person"]
+    CLASS_NAMES = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
     CLASSES = len(CLASS_NAMES)
 
     # Folder inside of the 'data' folder where your images and
@@ -43,7 +43,7 @@ def initialize():
 
     # Names of the txt files in the data directory containing
     # names of the images that you want to convert to TFRecords
-    IMAGE_NAMES_FILE = 'train_image_names_abundant.txt'
+    IMAGE_NAMES_FILE = 'train_test.txt'
     TFRECORD_OUTPUT_FILENAME = 'train'
 
 

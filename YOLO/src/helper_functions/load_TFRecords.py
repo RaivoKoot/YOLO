@@ -9,6 +9,13 @@ operations on the dataset.
 """
 import tensorflow as tf
 from pathlib import Path
+import cv2
+import numpy as np
+from YOLO.src.helper_functions.labeltensor_creator import \
+                                            labeltensor_from_bboxes
+
+from albumentations import OneOf, HorizontalFlip, CLAHE, IAASharpen, IAAEmboss, \
+    RandomBrightnessContrast, BboxParams, Compose, ShiftScaleRotate, Resize
 
 import YOLO.GlobalValues as GlobalValues
 GlobalValues.initialize()
@@ -56,7 +63,60 @@ def parse_tfrecord(tfrecord):
 
     return image, label
 
-def add_preprocessing_definitions(dataset, batch_size=32, num_threads=10, augmentation=False):
+
+def tf_augment(image, bboxes):
+
+    def augment(image, bboxes):
+        '''
+        Stochastically applies horizontal flipping, cropping rotating, shifting,
+        and more to an image and its bounding boxes.
+        Returns the image as a tensor and the new bboxes as a B*5 Tensor.
+
+        params:
+        image: An image tensor.
+        bboxes: A B*5 tensor with YOLO style annotations and class ids.
+        '''
+        image_and_boxes = {'image': image.numpy(), 'bboxes': bboxes[:,:-1].numpy(),
+                                    'bbox_class_ids': bboxes[:,-1].numpy().flatten()}
+
+        output_height, output_width, _ = GlobalValues.FEATURE_EXTRACTOR_INPUT_SHAPE
+        aug = Compose([HorizontalFlip(),
+                       ShiftScaleRotate(p=1., scale_limit=0.2, border_mode=cv2.BORDER_CONSTANT, value=0),
+                       OneOf([
+                            CLAHE(clip_limit=2),
+                            IAASharpen(),
+                            IAAEmboss(),
+                            RandomBrightnessContrast(),
+                       ], p=0.5),
+                       Resize(output_height, output_width, always_apply=True)],
+                       bbox_params=BboxParams(format='yolo', min_visibility=0.55,
+                                                    label_fields=['bbox_class_ids']))
+
+        result = aug(**image_and_boxes)
+
+        image = result['image']
+        bboxes = np.array(result['bboxes'], dtype=np.float32)
+        labels = np.reshape(result['bbox_class_ids'], (-1,1))
+
+        bboxes = np.concatenate((bboxes, labels), axis=1)
+
+        return tf.constant(image), tf.constant(bboxes, dtype=tf.float32)
+
+    bboxes_shape = bboxes.shape
+
+    [image, bboxes, ] = tf.py_function(func=augment, inp=[image, bboxes], Tout=[tf.uint8, tf.float32])
+
+    image.set_shape(GlobalValues.FEATURE_EXTRACTOR_INPUT_SHAPE)
+    bboxes.set_shape(bboxes_shape)
+    return image, bboxes
+
+def tf_labeltensor_from_bboxes(bboxes):
+    labeltensor = tf.py_function(func=labeltensor_from_bboxes, inp=[bboxes], Tout=tf.float32)
+
+    labeltensor.set_shape((GlobalValues.S, GlobalValues.S, GlobalValues.B*(5+GlobalValues.CLASSES)))
+    return labeltensor
+
+def add_preprocessing_definitions(dataset, batch_size=32, num_threads=10, augmentation=True):
     '''
     Adds image preprocessing definitions onto the dataset
     and batch the dataset.
@@ -85,34 +145,25 @@ def add_preprocessing_definitions(dataset, batch_size=32, num_threads=10, augmen
         image_batch = tf.cast(image_batch, tf.float32)
         return GlobalValues.FEATURE_EXTRACTOR_PREPROCESSOR(image_batch)
 
-    def augment(image_batch):
+    if augmentation:
+        dataset = dataset.map(lambda x,y: tf_augment(x,y),
+                                num_parallel_calls=num_threads)
 
-        image_batch = tf.image.random_hue(image_batch, 0.08)
-        image_batch = tf.image.random_saturation(image_batch, 0.6, 1.6)
-        image_batch = tf.image.random_brightness(image_batch, 0.05)
-        image_batch = tf.image.random_contrast(image_batch, 0.7, 1.3)
-        image_batch = tf.clip_by_value(image_batch, -1., 1.)
-        return image_batch
-
-    dataset = dataset.map(lambda x,y: (scale_to_255(x), y),
+    dataset = dataset.map(lambda x,y: (x, tf_labeltensor_from_bboxes(y)),
                             num_parallel_calls=num_threads)
 
-    dataset = dataset.map(lambda x,y: (resize(x), y),
+    dataset = dataset.map(lambda x,y: (scale_to_255(x), y),
                             num_parallel_calls=num_threads)
 
     dataset = dataset.batch(batch_size)
     dataset = dataset.map(lambda x,y: (feature_extractor__preprocess(x), y),
                             num_parallel_calls=num_threads)
 
-    if augmentation:
-        dataset = dataset.map(lambda x,y: (augment(x), y),
-                                num_parallel_calls=num_threads)
-
     dataset = dataset.prefetch(1)
 
     return dataset
 
-def get_dataset(filenames, batch_size=32, num_threads=10, augmentation=False):
+def get_dataset(filenames, batch_size=32, num_threads=10, augmentation=True):
     '''
     Reads data from TFRecord files and returns a tf.data.Dataset object
     after applying interleaving, shuffling, preprocessing, and batching.
