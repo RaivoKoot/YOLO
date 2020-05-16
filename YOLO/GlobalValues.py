@@ -43,8 +43,8 @@ def initialize():
 
     # Names of the txt files in the data directory containing
     # names of the images that you want to convert to TFRecords
-    IMAGE_NAMES_FILE = 'train_test.txt'
-    TFRECORD_OUTPUT_FILENAME = 'train'
+    IMAGE_NAMES_FILE = 'val_image_names_abundant.txt'
+    TFRECORD_OUTPUT_FILENAME = 'val'
 
 
     # Select the weights for different Loss terms

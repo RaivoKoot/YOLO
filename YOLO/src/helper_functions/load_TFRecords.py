@@ -76,7 +76,9 @@ def tf_augment(image, bboxes):
         image: An image tensor.
         bboxes: A B*5 tensor with YOLO style annotations and class ids.
         '''
-        image_and_boxes = {'image': image.numpy(), 'bboxes': bboxes[:,:-1].numpy(),
+        boxes = bboxes[:,:-1].numpy()
+        boxes[:,[2,3]] = boxes[:,[2,3]] - 0.00999 # Prevent Albumentations from converting to bounding boxes point out of bounds
+        image_and_boxes = {'image': image.numpy(), 'bboxes': boxes,
                                     'bbox_class_ids': bboxes[:,-1].numpy().flatten()}
 
         output_height, output_width, _ = GlobalValues.FEATURE_EXTRACTOR_INPUT_SHAPE
@@ -91,16 +93,26 @@ def tf_augment(image, bboxes):
                        Resize(output_height, output_width, always_apply=True)],
                        bbox_params=BboxParams(format='yolo', min_visibility=0.55,
                                                     label_fields=['bbox_class_ids']))
+        try:
+            result = aug(**image_and_boxes)
+            augment_success = True
+        except ValueError:
+            augment_success = False
+            print('Bounding box error occured in augmentation. Augmenting step skipped.')
+        
+        if augment_success:
+            image = result['image']
+            bboxes = np.reshape(np.array(result['bboxes'], dtype=np.float32), (-1,4))
+            labels = np.reshape(result['bbox_class_ids'], (-1,1))
 
-        result = aug(**image_and_boxes)
+            bboxes = np.concatenate((bboxes, labels), axis=1)
 
-        image = result['image']
-        bboxes = np.array(result['bboxes'], dtype=np.float32)
-        labels = np.reshape(result['bbox_class_ids'], (-1,1))
+            return tf.constant(image), tf.constant(bboxes, dtype=tf.float32)
+        else:
+            shape = GlobalValues.FEATURE_EXTRACTOR_INPUT_SHAPE
+            shape = (shape[0], shape[1])
 
-        bboxes = np.concatenate((bboxes, labels), axis=1)
-
-        return tf.constant(image), tf.constant(bboxes, dtype=tf.float32)
+            return tf.cast(tf.image.resize(image, shape), tf.uint8), bboxes
 
     bboxes_shape = bboxes.shape
 
@@ -147,6 +159,9 @@ def add_preprocessing_definitions(dataset, batch_size=32, num_threads=10, augmen
 
     if augmentation:
         dataset = dataset.map(lambda x,y: tf_augment(x,y),
+                                num_parallel_calls=num_threads)
+    else:
+        dataset = dataset.map(lambda x,y: (resize(x), y),
                                 num_parallel_calls=num_threads)
 
     dataset = dataset.map(lambda x,y: (x, tf_labeltensor_from_bboxes(y)),

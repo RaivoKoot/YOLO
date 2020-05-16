@@ -88,6 +88,7 @@ def create_annotation_tensor(filename):
         object_annotations.append(annotation)
 
     annotations = tf.constant(object_annotations)
+    annotations = tf.clip_by_value(annotations, 0.0, 1.0)
 
     return annotations
 
