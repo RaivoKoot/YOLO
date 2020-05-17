@@ -15,7 +15,8 @@ from YOLO.src.helper_functions.labeltensor_creator import \
                                             labeltensor_from_bboxes
 
 from albumentations import OneOf, HorizontalFlip, CLAHE, IAASharpen, IAAEmboss, \
-    RandomBrightnessContrast, BboxParams, Compose, ShiftScaleRotate, Resize
+    RandomBrightnessContrast, BboxParams, Compose, ShiftScaleRotate, Resize, \
+    HueSaturationValue, ChannelShuffle, RGBShift
 
 import YOLO.GlobalValues as GlobalValues
 GlobalValues.initialize()
@@ -89,7 +90,10 @@ def tf_augment(image, bboxes):
                             IAASharpen(),
                             IAAEmboss(),
                             RandomBrightnessContrast(),
-                       ], p=0.5),
+                       ], p=1.0),
+                       HueSaturationValue(p=1.0),
+                       RGBShift(p=1.0),
+                       ChannelShuffle(p=0.5),
                        Resize(output_height, output_width, always_apply=True)],
                        bbox_params=BboxParams(format='yolo', min_visibility=0.55,
                                                     label_fields=['bbox_class_ids']))
@@ -98,8 +102,8 @@ def tf_augment(image, bboxes):
             augment_success = True
         except ValueError:
             augment_success = False
-            print('Bounding box error occured in augmentation. Augmenting step skipped.')
-        
+            print('\nBounding box error occured in augmentation. Augmenting step skipped.')
+
         if augment_success:
             image = result['image']
             bboxes = np.reshape(np.array(result['bboxes'], dtype=np.float32), (-1,4))
