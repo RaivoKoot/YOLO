@@ -97,10 +97,11 @@ def tf_augment(image, bboxes):
                        Resize(output_height, output_width, always_apply=True)],
                        bbox_params=BboxParams(format='yolo', min_visibility=0.55,
                                                     label_fields=['bbox_class_ids']))
+        
         try:
             result = aug(**image_and_boxes)
             augment_success = True
-        except ValueError:
+        except ValueError as e:
             augment_success = False
             print('\nBounding box error occured in augmentation. Augmenting step skipped.')
 
